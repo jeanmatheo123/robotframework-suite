@@ -46,7 +46,8 @@ Login Error Should Contain
     Element Should Contain           css:[data-test='error']    ${expected_text}
 
 Add First Item To Cart
-    Click Button    xpath://div[@class='inventory_item'][1]//button
+    Wait Until Element Is Enabled    xpath://div[@class='inventory_item'][1]//button
+    Click Button                     xpath://div[@class='inventory_item'][1]//button
 
 Cart Badge Should Show
     [Arguments]    ${count}
@@ -55,17 +56,24 @@ Cart Badge Should Show
 
 Go To Checkout
     Click Element    css:[data-test='shopping-cart-link']
-    Wait Until Element Is Visible    css:[data-test='checkout']
+    # matches the same class of hydration race the login button has: the
+    # button is visible in the DOM before its React click handler is
+    # actually wired up, so this test occasionally clicked before Sauce
+    # Demo's SPA was ready to respond to it — waiting for "enabled" rather
+    # than just "visible" is what fixed the equivalent issue on the login
+    # page, and this closed the same gap in the wait chain.
+    Wait Until Element Is Enabled    css:[data-test='checkout']
     Click Button                     css:[data-test='checkout']
-    Wait Until Element Is Visible    css:[data-test='firstName']
+    Wait Until Location Contains     checkout-step-one.html
 
 Fill Checkout Information
     [Arguments]    ${first_name}    ${last_name}    ${postal_code}
+    Wait Until Element Is Enabled    css:[data-test='firstName']
     Input Text      css:[data-test='firstName']      ${first_name}
     Input Text      css:[data-test='lastName']       ${last_name}
     Input Text      css:[data-test='postalCode']     ${postal_code}
     Click Button    css:[data-test='continue']
-    Wait Until Element Is Visible    css:[data-test='total-label']
+    Wait Until Location Contains    checkout-step-two.html
 
 Get Price Breakdown
     ${subtotal_text}=    Get Text    css:[data-test='subtotal-label']
@@ -77,8 +85,9 @@ Get Price Breakdown
     RETURN    ${subtotal}    ${tax}    ${total}
 
 Finish Checkout
-    Click Button    css:[data-test='finish']
-    Wait Until Location Contains    checkout-complete.html
+    Wait Until Element Is Enabled    css:[data-test='finish']
+    Click Button                     css:[data-test='finish']
+    Wait Until Location Contains     checkout-complete.html
 
 Order Should Be Complete
     Wait Until Element Is Visible    css:[data-test='complete-header']
