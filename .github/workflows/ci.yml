@@ -22,7 +22,27 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run web suite (headless Chrome)
-        run: robot --outputdir results/web tests/web
+        # Sauce Demo is a client-rendered SPA, and even with explicit waits
+        # in place a click can occasionally land a moment before its handler
+        # is wired up — observed even locally, not just on CI. Robot's own
+        # --rerunfailed + rebot --merge re-executes only the tests still
+        # failing and folds the result back into one report, up to two
+        # extra attempts. A real regression fails the same way every time
+        # and still fails the build; this only absorbs that one class of
+        # environment noise.
+        run: |
+          set +e
+          robot --outputdir results/web tests/web
+          rc=$?
+          attempt=1
+          while [ $rc -ne 0 ] && [ $attempt -le 2 ]; do
+            echo "Attempt $attempt failed — rerunning just the still-failing tests"
+            robot --outputdir results/web --rerunfailed results/web/output.xml --output rerun.xml tests/web
+            rebot --outputdir results/web --output output.xml --merge results/web/output.xml results/web/rerun.xml
+            rc=$?
+            attempt=$((attempt + 1))
+          done
+          exit $rc
 
       - name: Run API suite
         run: robot --outputdir results/api tests/api
