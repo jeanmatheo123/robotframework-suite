@@ -30,6 +30,15 @@ Open Sauce Demo
     # the JS bundle finishes hydrating, so wait for that before doing anything.
     Wait Until Element Is Enabled    css:[data-test='login-button']
 
+Click Via Javascript
+    [Arguments]    ${data_test}
+    # a native WebDriver click resolves an element's bounding box and clicks
+    # its center point — with the GPU disabled for headless CI, this SPA has
+    # occasionally rendered in a state where that native click silently
+    # lands on nothing. Calling .click() through the DOM API directly
+    # sidesteps that entirely; it doesn't care where the element is drawn.
+    Execute Javascript    document.querySelector("[data-test='${data_test}']").click();
+
 Log In As
     [Arguments]    ${username}    ${password}
     Input Text      css:[data-test='username']    ${username}
@@ -63,12 +72,7 @@ Go To Checkout
     # than just "visible" is what fixed the equivalent issue on the login
     # page, and this closed the same gap in the wait chain.
     Wait Until Element Is Enabled    css:[data-test='checkout']
-    # a condition wait alone still isn't fully reliable against this SPA —
-    # "enabled" can be true a beat before the click handler actually does
-    # anything. A short fixed pause here is a deliberate belt-and-suspenders
-    # addition on top of the condition wait, not a replacement for it.
-    Sleep    0.3s
-    Click Button                     css:[data-test='checkout']
+    Click Via Javascript    checkout
     Wait Until Location Contains     checkout-step-one.html
 
 Fill Checkout Information
@@ -77,8 +81,7 @@ Fill Checkout Information
     Input Text      css:[data-test='firstName']      ${first_name}
     Input Text      css:[data-test='lastName']       ${last_name}
     Input Text      css:[data-test='postalCode']     ${postal_code}
-    Sleep    0.3s
-    Click Button    css:[data-test='continue']
+    Click Via Javascript    continue
     Wait Until Location Contains    checkout-step-two.html
 
 Get Price Breakdown
@@ -92,8 +95,7 @@ Get Price Breakdown
 
 Finish Checkout
     Wait Until Element Is Enabled    css:[data-test='finish']
-    Sleep    0.3s
-    Click Button                     css:[data-test='finish']
+    Click Via Javascript    finish
     Wait Until Location Contains     checkout-complete.html
 
 Order Should Be Complete
