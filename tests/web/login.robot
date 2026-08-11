@@ -18,5 +18,5 @@ Wrong Password Is Rejected
     Login Error Should Contain    do not match any user in this service
 
 Empty Username Is Rejected Client Side
-    Click Button    css:[data-test='login-button']
+    Click Via Javascript    [data-test='login-button']
     Login Error Should Contain    Username is required

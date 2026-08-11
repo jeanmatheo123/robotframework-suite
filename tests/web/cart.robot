@@ -14,6 +14,6 @@ Adding An Item Updates The Cart Badge
 Cart Contents Persist Into The Cart Page
     Log In As    ${STANDARD_USER}    ${PASSWORD}
     Add First Item To Cart
-    Click Element    css:[data-test='shopping-cart-link']
-    Location Should Contain    cart.html
+    Click Via Javascript    [data-test='shopping-cart-link']
+    Wait Until Location Contains    cart.html
     Page Should Contain Element    css:[data-test='inventory-item']
