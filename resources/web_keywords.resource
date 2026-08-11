@@ -78,9 +78,21 @@ Go To Checkout
 Fill Checkout Information
     [Arguments]    ${first_name}    ${last_name}    ${postal_code}
     Wait Until Element Is Enabled    css:[data-test='firstName']
-    Input Text      css:[data-test='firstName']      ${first_name}
-    Input Text      css:[data-test='lastName']       ${last_name}
-    Input Text      css:[data-test='postalCode']     ${postal_code}
+    # clicking each field before typing gives it real focus first — without
+    # that, sendKeys has, on headless Linux CI, occasionally sent keystrokes
+    # that never reached this React-controlled input at all, leaving it
+    # showing empty (and Continue then correctly refuses to proceed).
+    Click Element    css:[data-test='firstName']
+    Input Text       css:[data-test='firstName']      ${first_name}
+    Click Element    css:[data-test='lastName']
+    Input Text       css:[data-test='lastName']       ${last_name}
+    Click Element    css:[data-test='postalCode']
+    Input Text       css:[data-test='postalCode']     ${postal_code}
+    # a direct, immediate check here fails with an honest message right at
+    # the actual problem, instead of a confusing "didn't navigate" error
+    # three steps downstream if a field silently didn't take the input.
+    ${actual_first_name}=    Get Value    css:[data-test='firstName']
+    Should Be Equal    ${actual_first_name}    ${first_name}
     Click Via Javascript    continue
     Wait Until Location Contains    checkout-step-two.html
 
