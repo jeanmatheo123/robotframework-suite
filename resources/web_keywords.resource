@@ -39,6 +39,20 @@ Click Via Javascript
     # sidesteps that entirely; it doesn't care where the element is drawn.
     Execute Javascript    document.querySelector("[data-test='${data_test}']").click();
 
+Type Via Javascript
+    [Arguments]    ${data_test}    ${text}
+    # sendKeys through Input Text (even after a real Click to focus first)
+    # has, on this same headless-Linux-CI setup, left this React-controlled
+    # field reading back empty — a keystroke-simulation issue, not a focus
+    # one. Setting the value through React's own tracked native setter and
+    # firing the events it listens for is what actually reaches its state.
+    Execute Javascript
+    ...    var el = document.querySelector("[data-test='${data_test}']");
+    ...    var setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+    ...    setter.call(el, "${text}");
+    ...    el.dispatchEvent(new Event('input', { bubbles: true }));
+    ...    el.dispatchEvent(new Event('change', { bubbles: true }));
+
 Log In As
     [Arguments]    ${username}    ${password}
     Input Text      css:[data-test='username']    ${username}
@@ -78,16 +92,9 @@ Go To Checkout
 Fill Checkout Information
     [Arguments]    ${first_name}    ${last_name}    ${postal_code}
     Wait Until Element Is Enabled    css:[data-test='firstName']
-    # clicking each field before typing gives it real focus first — without
-    # that, sendKeys has, on headless Linux CI, occasionally sent keystrokes
-    # that never reached this React-controlled input at all, leaving it
-    # showing empty (and Continue then correctly refuses to proceed).
-    Click Element    css:[data-test='firstName']
-    Input Text       css:[data-test='firstName']      ${first_name}
-    Click Element    css:[data-test='lastName']
-    Input Text       css:[data-test='lastName']       ${last_name}
-    Click Element    css:[data-test='postalCode']
-    Input Text       css:[data-test='postalCode']     ${postal_code}
+    Type Via Javascript    firstName      ${first_name}
+    Type Via Javascript    lastName       ${last_name}
+    Type Via Javascript    postalCode     ${postal_code}
     # a direct, immediate check here fails with an honest message right at
     # the actual problem, instead of a confusing "didn't navigate" error
     # three steps downstream if a field silently didn't take the input.
