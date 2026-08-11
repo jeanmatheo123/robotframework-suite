@@ -14,7 +14,12 @@ Open Sauce Demo
     # A fresh browser per test, rather than one shared across a whole suite,
     # trades a little speed for guaranteeing no state (cookies, JS memory,
     # a half-finished previous interaction) leaks from one test into the next.
+    # --no-sandbox and --disable-dev-shm-usage are the standard fix for Chrome
+    # behaving unreliably (crashes, clicks that silently don't register) in a
+    # containerized Linux CI runner — a purely local Windows run never hits
+    # this, which is exactly why it wasn't obvious until CI actually ran it.
     Open Browser    ${BASE_URL}    ${BROWSER}
+    ...    options=add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Set Window Size    1366    768
     # generous on purpose: shared CI runners are noticeably slower/noisier
     # than a local dev machine, and a fresh headless Chrome + SPA hydration
