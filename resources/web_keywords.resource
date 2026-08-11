@@ -16,7 +16,10 @@ Open Sauce Demo
     # a half-finished previous interaction) leaks from one test into the next.
     Open Browser    ${BASE_URL}    ${BROWSER}
     Set Window Size    1366    768
-    Set Selenium Timeout    10s
+    # generous on purpose: shared CI runners are noticeably slower/noisier
+    # than a local dev machine, and a fresh headless Chrome + SPA hydration
+    # on every single test needs more headroom there than 10s reliably gives
+    Set Selenium Timeout    20s
     # Sauce Demo is a client-rendered SPA — the button exists in the DOM as
     # soon as the page responds, but its click handler isn't wired up until
     # the JS bundle finishes hydrating, so wait for that before doing anything.
