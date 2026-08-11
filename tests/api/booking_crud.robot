@@ -46,6 +46,25 @@ Full Booking Lifecycle: Create, Read, Update, Delete
     # confirm it's actually gone
     GET On Session    booker    /booking/${booking_id}    expected_status=404
 
+A New Booking Can Be Found By Filtering On Its Own Unique Name
+    # the shared /booking collection has thousands of entries from everyone
+    # using this public demo API, so a random real name would be meaningless
+    # to search for — generate one that's guaranteed not to collide instead.
+    ${unique_name}=    Evaluate    "QaFramework" + str(int(time.time() * 1000))    modules=time
+    ${payload}=    Build Booking Payload    firstname=${unique_name}
+    ${create_response}=    POST On Session    booker    /booking    json=${payload}
+    ${booking_id}=    Set Variable    ${create_response.json()}[bookingid]
+
+    ${filtered}=    GET On Session    booker    /booking    params=${{ {'firstname': $unique_name} }}
+    ${filtered_ids}=    Create List
+    FOR    ${entry}    IN    @{filtered.json()}
+        Append To List    ${filtered_ids}    ${entry}[bookingid]
+    END
+    List Should Contain Value    ${filtered_ids}    ${booking_id}
+
+    ${token}=    Authenticate And Get Token
+    DELETE On Session    booker    /booking/${booking_id}    cookies=${{ {'token': $token} }}    expected_status=201
+
 Update Without A Token Is Rejected
     ${payload}=    Build Booking Payload
     ${create_response}=    POST On Session    booker    /booking    json=${payload}

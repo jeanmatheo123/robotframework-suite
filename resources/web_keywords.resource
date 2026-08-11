@@ -1,5 +1,6 @@
 *** Settings ***
 Library    SeleniumLibrary
+Library    String
 
 *** Variables ***
 ${BASE_URL}         https://www.saucedemo.com
@@ -43,3 +44,34 @@ Cart Badge Should Show
     [Arguments]    ${count}
     Wait Until Element Is Visible    css:[data-test='shopping-cart-badge']
     Element Should Contain           css:[data-test='shopping-cart-badge']    ${count}
+
+Go To Checkout
+    Click Element    css:[data-test='shopping-cart-link']
+    Wait Until Element Is Visible    css:[data-test='checkout']
+    Click Button                     css:[data-test='checkout']
+    Wait Until Element Is Visible    css:[data-test='firstName']
+
+Fill Checkout Information
+    [Arguments]    ${first_name}    ${last_name}    ${postal_code}
+    Input Text      css:[data-test='firstName']      ${first_name}
+    Input Text      css:[data-test='lastName']       ${last_name}
+    Input Text      css:[data-test='postalCode']     ${postal_code}
+    Click Button    css:[data-test='continue']
+    Wait Until Element Is Visible    css:[data-test='total-label']
+
+Get Price Breakdown
+    ${subtotal_text}=    Get Text    css:[data-test='subtotal-label']
+    ${tax_text}=          Get Text    css:[data-test='tax-label']
+    ${total_text}=        Get Text    css:[data-test='total-label']
+    ${subtotal}=    Fetch From Right    ${subtotal_text}    $
+    ${tax}=          Fetch From Right    ${tax_text}    $
+    ${total}=        Fetch From Right    ${total_text}    $
+    RETURN    ${subtotal}    ${tax}    ${total}
+
+Finish Checkout
+    Click Button    css:[data-test='finish']
+    Wait Until Location Contains    checkout-complete.html
+
+Order Should Be Complete
+    Wait Until Element Is Visible    css:[data-test='complete-header']
+    Element Should Contain           css:[data-test='complete-header']    Thank you for your order!
